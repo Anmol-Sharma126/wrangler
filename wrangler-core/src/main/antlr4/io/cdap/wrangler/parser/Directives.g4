@@ -38,9 +38,8 @@ options {
  */
 }
 
-/**
- * Parser Grammar for recognizing tokens and constructs of the directives language.
- */
+// -------------------- Parser Rules --------------------
+
 recipe
  : statements EOF
  ;
@@ -128,7 +127,7 @@ propertyList
  ;
 
 property
- : Identifier '=' ( text | number | bool )
+ : Identifier '=' ( text | number | bool | BYTE_SIZE | TIME_DURATION )
  ;
 
 numberRanges
@@ -140,7 +139,12 @@ numberRange
  ;
 
 value
- : String | Number | Column | Bool
+ : String
+ | Number
+ | Column
+ | Bool
+ | BYTE_SIZE
+ | TIME_DURATION
  ;
 
 ecommand
@@ -195,10 +199,8 @@ identifierList
  : Identifier (',' Identifier)*
  ;
 
+// -------------------- Lexer Rules --------------------
 
-/*
- * Following are the Lexer Rules used for tokenizing the recipe.
- */
 OBrace   : '{';
 CBrace   : '}';
 SColon   : ';';
@@ -247,7 +249,6 @@ BackSlash: '\\';
 Dollar   : '$';
 Tilde    : '~';
 
-
 Bool
  : 'true'
  | 'false'
@@ -270,8 +271,24 @@ Column
  ;
 
 String
- : '\'' ( EscapeSequence | ~('\'') )* '\''
+ : '\'' ( EscapeSequence | ~('\'' ) )* '\''
  | '"'  ( EscapeSequence | ~('"') )* '"'
+ ;
+
+BYTE_SIZE
+ : [0-9]+ ('.' [0-9]+)? BYTE_UNIT
+ ;
+
+fragment BYTE_UNIT
+ : 'B' | 'KB' | 'MB' | 'GB' | 'TB'
+ ;
+
+TIME_DURATION
+ : [0-9]+ ('.' [0-9]+)? TIME_UNIT
+ ;
+
+fragment TIME_UNIT
+ : 'ms' | 's' | 'min' | 'h'
  ;
 
 EscapeSequence
@@ -293,7 +310,7 @@ UnicodeEscape
    ;
 
 fragment
-   HexDigit : ('0'..'9'|'a'..'f'|'A'..'F') ;
+HexDigit : ('0'..'9'|'a'..'f'|'A'..'F') ;
 
 Comment
  : ('//' ~[\r\n]* | '/*' .*? '*/' | '--' ~[\r\n]* ) -> skip
